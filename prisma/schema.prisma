@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 1. Controle de Usuários e Permissões (RBAC)
+model Usuario {
+  id            String   @id @default(uuid())
+  matricula     String   @unique
+  senha_hash    String
+  regra         String   // "MOTORISTA", "GESTOR", "ADMIN"
+  criado_em     DateTime @default(now())
+
+  pontos        Ponto[]
+  logs_saude    LogSaudeDispositivo[]
+  ocorrencias   OcorrenciaCampo[]
+}
+
+// 2. Registro de Ponto Baseado 100% no Servidor
+model Ponto {
+  id                 String   @id @default(uuid())
+  usuario_id         String
+  tipo_ponto         String   // "ENTRADA", "SAIDA"
+  status_localizacao String   // "NA_BASE", "FORA_DA_BASE"
+  latitude_batida    Float
+  longitude_batida   Float
+  horario_servidor   DateTime @default(now())
+  hash_auditoria     String   @unique
+
+  usuario            Usuario  @relation(fields: [usuario_id], references: [id])
+}
+
+// 3. Telemetria e Antifraude (Caixa-Preta do Aparelho)
+model LogSaudeDispositivo {
+  id                String   @id @default(uuid())
+  usuario_id        String
+  nivel_bateria     Int
+  esta_carregando   Boolean
+  gps_fake_detectado Boolean
+  km_total_odometro Float
+  gravado_em        DateTime @default(now())
+
+  usuario           Usuario  @relation(fields: [usuario_id], references: [id])
+}
+
+// 4. Prova Jurídica de Condições e Logística
+model OcorrenciaCampo {
+  id                 String   @id @default(uuid())
+  usuario_id         String
+  tipo_incidente     String   // "FALTA_BANHEIRO", "FALTA_AGUA", "ESPERA_ABUSIVA"
+  tempo_ocioso_min   Int
+  latitude_evento    Float
+  longitude_evento   Float
+  foto_hash          String?
+  observacao         String?
+  notificado_cliente Boolean  @default(false)
+  registrado_em      DateTime @default(now())
+
+  usuario            Usuario  @relation(fields: [usuario_id], references: [id])
+}
