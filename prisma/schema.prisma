@@ -33,8 +33,8 @@ model Ponto {
   status_localizacao String   // "NA_BASE", "FORA_DA_BASE"
   latitude_batida    Float
   longitude_batida   Float
-  horario_servidor   DateTime @default(now())
-  hash_auditoria     String   @unique
+  horario_servidor   DateTime @default(now()) // Hora imutável do Node.js
+  hash_auditoria     String   @unique          // SHA-256 do bloco
 
   usuario            Usuario  @relation(fields: [usuario_id], references: [id])
 }
@@ -45,22 +45,22 @@ model LogSaudeDispositivo {
   usuario_id        String
   nivel_bateria     Int
   esta_carregando   Boolean
-  gps_fake_detectado Boolean
-  km_total_odometro Float
+  gps_fake_detectado Boolean   // Antifraude de Mock GPS
+  km_total_odometro Float     // Marcador acumulado por cálculo de GPS
   gravado_em        DateTime @default(now())
 
   usuario           Usuario  @relation(fields: [usuario_id], references: [id])
 }
 
-// 4. Prova Jurídica de Condições e Logística
+// 4. Prova Jurídica de Condições e Logística (Contra Abusos)
 model OcorrenciaCampo {
   id                 String   @id @default(uuid())
   usuario_id         String
   tipo_incidente     String   // "FALTA_BANHEIRO", "FALTA_AGUA", "ESPERA_ABUSIVA"
-  tempo_ocioso_min   Int
+  tempo_ocioso_min   Int      // Tempo parado calculado via Geofence
   latitude_evento    Float
   longitude_evento   Float
-  foto_hash          String?
+  foto_hash          String?  // SHA-256 da imagem capturada (OCR/Ambiente)
   observacao         String?
   notificado_cliente Boolean  @default(false)
   registrado_em      DateTime @default(now())
