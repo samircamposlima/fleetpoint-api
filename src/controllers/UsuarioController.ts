@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 import { prisma } from "../database";
+import { hash } from "bcryptjs"
 
 export class UsuarioController {
     async criar(req: Request, res: Response): Promise<Response> {
         try{
-            const {matricula, senha_hash, regra} = req.body;
+            const {matricula, senha, regra} = req.body;
 
             // Validação básica dos dados obrigatórios
-            if(!matricula || !senha_hash || !regra){
+            if(!matricula || !senha || !regra){
                 return res.status(400).json({error:"Dados incompletos para registro."})
             }
 // Verificação lógica de duplicidade no banco
@@ -19,11 +20,13 @@ export class UsuarioController {
         return res.status(400).json({ error: "Esta matrícula já está cadastrada." });
       }
 
+      const senhaCriptografada = await hash(senha, 10);
+
       // Persistência matemática no PostgreSQL via Prisma
       const novoUsuario = await prisma.usuario.create({
         data: {
             matricula,
-            senha_hash, // Mais para frente aplicaremos a criptografia aqui
+            senha_hash : senhaCriptografada,
             regra
         }
       });
